@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🐞 НАСЕКОМЫЕ - Ткни пальцем в правильный ответ!</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;user-select:none;}
+  body{overflow:hidden;font-family:'Segoe UI','Comic Sans MS',system-ui,sans-serif;}
+  #app{position:relative;width:100vw;height:100vh;overflow:hidden;background:linear-gradient(135deg,#2d1a0a,#1a0a0a);}
+  #video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);z-index:0;opacity:0.3;}
+  #overlayCanvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;}
+  #insectLayer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;}
+  
+  .insect{
+    position:absolute;
+    width:110px;
+    height:100px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    filter:drop-shadow(0 8px 12px rgba(0,0,0,0.4));
+    transition:transform 0.05s linear;
+    animation:wiggle 0.2s infinite;
+  }
+  @keyframes wiggle{
+    0%,100%{transform:rotate(-4deg) scale(1);}
+    50%{transform:rotate(4deg) scale(1.05);}
+  }
+  .insect .emoji{font-size:58px;filter:drop-shadow(2px 4px 6px rgba(0,0,0,0.3));}
+  .insect .answer{
+    background:linear-gradient(135deg,rgba(0,0,0,0.85),rgba(30,30,50,0.9));
+    color:#ffdd88;padding:6px 12px;border-radius:30px;font-size:16px;font-weight:bold;
+    margin-top:5px;backdrop-filter:blur(8px);border:2px solid rgba(255,215,0,0.5);
+  }
+  
+  .splat{
+    position:absolute;
+    width:70px;
+    height:70px;
+    background:radial-gradient(circle, #8B6914, #5a4a0c, #3a2a08);
+    border-radius:50%;
+    pointer-events:none;
+    animation:splatAnim 0.4s ease-out forwards;
+  }
+  @keyframes splatAnim{
+    0%{transform:scale(0.3);opacity:0.9;}
+    100%{transform:scale(1.8);opacity:0;}
+  }
+  .good-splat{background:radial-gradient(circle, #4caf50, #2e7d32, #1b5e20);}
+  
+  .stink-cloud{
+    position:absolute;width:90px;height:90px;
+    background:radial-gradient(circle, #6b3a1f, #4a2510, #2a1508, transparent);
+    border-radius:50%;pointer-events:none;filter:blur(8px);
+    animation:stink 0.9s ease-out forwards;
+  }
+  @keyframes stink{
+    0%{transform:scale(0.4);opacity:0.8;}
+    100%{transform:scale(2.2);opacity:0;}
+  }
+  
+  .scoreBox{position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);padding:14px 28px;border-radius:50px;color:#ffd966;z-index:10;font-size:28px;font-weight:bold;border:2px solid #8B6914;}
+  .comboBox{position:absolute;top:20px;right:20px;background:rgba(139,69,19,0.9);backdrop-filter:blur(10px);padding:14px 28px;border-radius:50px;color:#fff;z-index:10;font-size:20px;font-weight:bold;text-align:center;border:2px solid #ffd966;}
+  #questionBox{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);padding:18px 35px;border-radius:60px;color:#ffd966;z-index:10;font-size:24px;font-weight:bold;white-space:nowrap;border:3px solid #8B6914;box-shadow:0 0 20px rgba(139,69,19,0.5);}
+  #statusBar{position:absolute;bottom:20px;left:20px;background:rgba(0,0,0,0.7);padding:10px 20px;border-radius:35px;color:#bbb;font-size:14px;z-index:10;}
+  #fingerLabel{position:absolute;z-index:10;transform:translate(-50%,-130%);pointer-events:none;padding:8px 12px;border-radius:50px;background:rgba(0,0,0,0.7);border:2px solid #ffd966;font-size:13px;font-weight:bold;display:none;white-space:nowrap;color:#ffdd88;}
+  
+  #teacherPanel{
+    position:absolute;top:16px;left:16px;z-index:30;width:420px;
+    max-height:calc(100vh - 32px);overflow:auto;border-radius:24px;
+    background:rgba(13,28,40,0.95);border:2px solid #8B6914;
+    backdrop-filter:blur(10px);transition:all 0.3s ease;
+  }
+  #teacherPanel.collapsed{width:50px;left:16px;}
+  #teacherPanel.collapsed #teacherBody{display:none;}
+  #teacherHeader{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(0,0,0,0.6);border-bottom:2px solid #8B6914;cursor:pointer;}
+  #teacherHeader h3{color:#ffd966;font-size:18px;}
+  .toggle-btn{background:none;border:none;color:#ffd966;font-size:20px;cursor:pointer;}
+  #teacherBody{padding:15px;max-height:500px;overflow-y:auto;}
+  .teacher-note{font-size:12px;color:#aaa;margin-bottom:12px;padding:8px;background:rgba(0,0,0,0.3);border-radius:10px;}
+  
+  .insect-selector{
+    display:flex;
+    gap:8px;
+    margin:10px 0;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .insect-option{
+    padding:6px 12px;
+    background:#2a2a2a;
+    border-radius:30px;
+    cursor:pointer;
+    transition:all 0.2s;
+    font-size:24px;
+  }
+  .insect-option.active{
+    background:#ff9800;
+    transform:scale(1.05);
+    box-shadow:0 0 10px #ff9800;
+  }
+  .insect-option:hover{
+    transform:scale(1.1);
+  }
+  
+  .teacher-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:15px;}
+  .btn{padding:8px 12px;border-radius:20px;border:none;font-weight:bold;cursor:pointer;font-size:12px;}
+  .btn-primary{background:#ff9800;color:#1a1a2e;}
+  .btn-secondary{background:#3a6ea5;color:white;}
+  .btn-success{background:#4caf50;color:white;}
+  .btn-warning{background:#f44336;color:white;}
+  .question-list{display:flex;flex-direction:column;gap:12px;}
+  .question-card{
+    background:rgba(255,255,255,0.08);
+    border-radius:12px;
+    padding:10px;
+    border:1px solid rgba(255,255,255,0.1);
+    margin-bottom:10px;
+  }
+  .question-card.active{border-color:#ff9800;background:rgba(255,152,0,0.15);}
+  .question-title{font-size:13px;font-weight:bold;color:#ffd966;margin-bottom:8px;cursor:pointer;}
+  .question-title:hover{text-decoration:underline;}
+  .question-actions{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+  .small-btn{padding:4px 8px;font-size:11px;border-radius:15px;border:none;cursor:pointer;background:#dbe8ff;color:#16314d;}
+  .field{margin-bottom:8px;}
+  .field label{display:block;font-size:11px;color:#aaa;margin-bottom:3px;}
+  .field input,.field textarea{width:100%;padding:6px 8px;border-radius:8px;border:1px solid #444;background:rgba(0,0,0,0.5);color:white;font-size:12px;font-family:monospace;}
+  .field textarea{resize:vertical;min-height:60px;}
+  .wrong-row{display:flex;gap:4px;margin-bottom:4px;align-items:center;}
+  .wrong-row input{flex:1;}
+  .wrong-row button{background:#f44336;color:white;border:none;border-radius:15px;padding:4px 8px;font-size:10px;cursor:pointer;}
+  .add-wrong-btn{background:#4caf50;color:white;border:none;border-radius:15px;padding:4px 12px;font-size:11px;cursor:pointer;margin-top:5px;}
+  
+  #startOverlay{
+    position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a0a0a,#2d1a0a);
+    z-index:100;display:flex;justify-content:center;align-items:center;flex-direction:column;text-align:center;
+    border:10px solid #5a3a1a;
+  }
+  #startOverlay h1{color:#ffd966;font-size:56px;margin-bottom:20px;text-shadow:4px 4px 0 #5a3a1a;}
+  #startOverlay p{color:#fff;margin:12px 0;font-size:20px;}
+  .emoji-big{font-size:80px;margin:20px;}
+  #startBtn{margin-top:30px;padding:18px 60px;font-size:28px;background:linear-gradient(135deg,#8B6914,#5a3a1a);border:none;border-radius:60px;font-weight:bold;cursor:pointer;color:#ffd966;border:2px solid #ffd966;}
+  #startBtn:hover{transform:scale(1.05);}
+  
+  #gameOverScreen{
+    position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);
+    z-index:100;display:none;justify-content:center;align-items:center;flex-direction:column;text-align:center;
+  }
+  #gameOverScreen h1{color:#ffd966;font-size:52px;margin-bottom:20px;}
+  #gameOverScreen p{color:#ffd966;font-size:32px;margin:20px 0;}
+  #restartBtn{margin-top:30px;padding:18px 50px;font-size:26px;background:linear-gradient(135deg,#8B6914,#5a3a1a);border:none;border-radius:60px;font-weight:bold;cursor:pointer;color:#ffd966;border:2px solid #ffd966;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="overlayCanvas"></canvas>
+  <div id="insectLayer"></div>
+  
+  <div class="scoreBox">🐞 СЧЁТ: <span id="scoreValue">0</span></div>
+  <div class="comboBox">⚔️ КОМБО <span id="comboValue">0</span> <span id="comboMult">x1</span></div>
+  <div id="questionBox"></div>
+  <div id="statusBar">📷 Ожидание камеры...</div>
+  <div id="fingerLabel">👉 ТКНИ ПАЛЬЦЕМ!</div>
+  
+  <div id="teacherPanel">
+    <div id="teacherHeader"><h3>📝 Teacher Panel</h3><button class="toggle-btn" id="toggleTeacherBtn">▶</button></div>
+    <div id="teacherBody">
+      <div class="teacher-note">✏️ Нажмите на вопрос для редактирования. Все изменения СОХРАНЯЮТСЯ АВТОМАТИЧЕСКИ!</div>
+      
+      <div class="teacher-note" style="margin-top:5px;">🦗 ВЫБЕРИ НАСЕКОМОЕ:</div>
+      <div class="insect-selector" id="insectSelector"></div>
+      
+      <div class="teacher-actions">
+        <button class="btn btn-success" id="addQuestionBtn">➕ Добавить вопрос</button>
+        <button class="btn btn-secondary" id="resetScoreBtn">🔄 Сброс счёта</button>
+        <button class="btn btn-warning" id="resetQuestionsBtn">🔄 Сбросить вопросы по умолчанию</button>
+      </div>
+      <div id="questionsContainer" class="question-list"></div>
+      <div class="teacher-note" style="margin-top:10px; font-size:10px; color:#4caf50;">✅ Все изменения сохраняются автоматически! Нажмите ✏️ Редактировать, чтобы удалить отдельные варианты ответов (красный крестик).</div>
+    </div>
+  </div>
+  
+  <div id="startOverlay">
+    <div class="emoji-big">🪳🦗🐜🕷️🐛🪲🐞</div>
+    <h1>НАСЕКОМЫЕ - БЕГА</h1>
+    <p>Ткни пальцем в насекомое с ПРАВИЛЬНЫМ ответом!</p>
+    <p>✅ Правильно = +10 очков + комбо → следующий вопрос</p>
+    <p>❌ Неправильно = вонючий смрад -5 очков</p>
+    <p>👉 ПОКАЖИТЕ УКАЗАТЕЛЬНЫЙ ПАЛЕЦ</p>
+    <div class="emoji-big">👇👉👇</div>
+    <button id="startBtn">🦋 ПОГНАЛИ! 🦋</button>
+  </div>
+  
+  <div id="gameOverScreen">
+    <h1>🎉 ИГРА ЗАВЕРШЕНА! 🎉</h1>
+    <p>🐞 Ваш счёт: <span id="finalScore">0</span></p>
+    <button id="restartBtn">🔄 ИГРАТЬ СНОВА</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+<script>
+  // ========== КЛЮЧ ДЛЯ LOCALSTORAGE ==========
+  const STORAGE_KEY = "insect_game_questions";
+  
+  // ========== ВИДЫ НАСЕКОМЫХ ==========
+  const insectNames = {
+    1: { emoji: "🪳", name: "ТАРАКАН" },
+    2: { emoji: "🦗", name: "КУЗНЕЧИК" },
+    3: { emoji: "🐜", name: "МУРАВЕЙ" },
+    4: { emoji: "🕷️", name: "ПАУК" },
+    5: { emoji: "🐛", name: "ГУСЕНИЦА" },
+    6: { emoji: "🪲", name: "ЖУК" },
+    7: { emoji: "🐞", name: "БОЖЬЯ КОРОВКА" }
+  };
+  
+  // ========== ВОПРОСЫ ПО УМОЛЧАНИЮ ==========
+  const DEFAULT_QUESTIONS = [
+    { sentence: "_____ — столица Франции", correct: "Париж", wrong: ["Лондон","Берлин","Мадрид","Рим","Прага","Вена"] },
+    { sentence: "2 × 2 = _____", correct: "4", wrong: ["3","5","6","7","8","9"] },
+    { sentence: "_____ is the capital of England", correct: "London", wrong: ["Paris","Berlin","Madrid","Rome","Lisbon","Dublin"] }
+  ];
+
+  // ========== ЗАГРУЗКА/СОХРАНЕНИЕ ВОПРОСОВ ==========
+  function loadQuestions(){
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      try{
+        return JSON.parse(saved);
+      }catch(e){
+        return JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+      }
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+  }
+  
+  function saveQuestionsToLocal(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentQuestions));
+  }
+
+  let currentInsectEmoji = "🪳";
+  let currentInsectIndex = 1;
+  
+  let currentQuestions = loadQuestions();
+  let currentQuestionIndex = 0;
+  let currentQuestion = currentQuestions[0];
+  let score = 0, combo = 0;
+  let gameStarted = false;
+  let insects = [];
+  let fingerPos = null;
+  let lastFingerSeenAt = 0;
+  let handGlowPulse = 0;
+  let animationFrameId = null;
+  let hands = null;
+  let camera = null;
+  let processingHit = false;
+  let comboTimeout = null;
+  let editingQuestionIndex = null;
+
+  const video = document.getElementById("video");
+  const overlayCanvas = document.getElementById("overlayCanvas");
+  const overlayCtx = overlayCanvas.getContext("2d");
+  const insectLayer = document.getElementById("insectLayer");
+  const scoreSpan = document.getElementById("scoreValue");
+  const comboSpan = document.getElementById("comboValue");
+  const comboMult = document.getElementById("comboMult");
+  const questionBox = document.getElementById("questionBox");
+  const statusBar = document.getElementById("statusBar");
+  const fingerLabel = document.getElementById("fingerLabel");
+  const startOverlay = document.getElementById("startOverlay");
+  const startBtn = document.getElementById("startBtn");
+  const gameOverScreen = document.getElementById("gameOverScreen");
+  const finalScoreSpan = document.getElementById("finalScore");
+  const restartBtn = document.getElementById("restartBtn");
+  const teacherPanel = document.getElementById("teacherPanel");
+  const toggleTeacherBtn = document.getElementById("toggleTeacherBtn");
+  const addQuestionBtn = document.getElementById("addQuestionBtn");
+  const resetScoreBtn = document.getElementById("resetScoreBtn");
+  const resetQuestionsBtn = document.getElementById("resetQuestionsBtn");
+  const questionsContainer = document.getElementById("questionsContainer");
+  const insectSelector = document.getElementById("insectSelector");
+
+  let width = window.innerWidth, height = window.innerHeight;
+
+  function createInsectSelector(){
+    insectSelector.innerHTML = '';
+    for(let i=1; i<=7; i++){
+      const opt = document.createElement('div');
+      opt.className = 'insect-option' + (currentInsectIndex === i ? ' active' : '');
+      opt.dataset.id = i;
+      opt.innerHTML = insectNames[i].emoji;
+      opt.title = insectNames[i].name;
+      opt.onclick = () => {
+        currentInsectIndex = i;
+        currentInsectEmoji = insectNames[i].emoji;
+        document.querySelectorAll('.insect-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        if(gameStarted){
+          insects.forEach(insec=>insec.el.remove());
+          insects = [];
+          createInsects();
+        }
+      };
+      insectSelector.appendChild(opt);
+    }
+  }
+
+  function resizeAll(){
+    width = window.innerWidth;
+    height = window.innerHeight;
+    overlayCanvas.width = width;
+    overlayCanvas.height = height;
+    if(gameStarted) createInsects();
+  }
+
+  function rand(min,max){return Math.random()*(max-min)+min;}
+
+  function updateUI(){
+    scoreSpan.textContent = score;
+    comboSpan.textContent = combo;
+    let mult = 1 + Math.floor(combo/5);
+    if(mult>5) mult=5;
+    comboMult.textContent = `x${mult}`;
+    if(currentQuestion) {
+      let qtext = currentQuestion.sentence.replace("_____","______");
+      questionBox.innerHTML = `📖 ${qtext}`;
+    }
+  }
+
+  function showGameOver(){
+    gameStarted = false;
+    finalScoreSpan.textContent = score;
+    gameOverScreen.style.display = "flex";
+  }
+
+  function nextQuestion(){
+    if(!gameStarted) return;
+    currentQuestionIndex++;
+    if(currentQuestionIndex >= currentQuestions.length){
+      showGameOver();
+      return;
+    }
+    currentQuestion = currentQuestions[currentQuestionIndex];
+    updateUI();
+    insects.forEach(i=>i.el.remove());
+    insects = [];
+    createInsects();
+    statusBar.innerHTML = `🔄 Вопрос ${currentQuestionIndex+1}/${currentQuestions.length}`;
+  }
+
+  function createSplat(x,y,isCorrect){
+    let splat = document.createElement("div");
+    splat.className = "splat" + (isCorrect ? " good-splat" : "");
+    splat.style.left = (x-35)+"px";
+    splat.style.top = (y-35)+"px";
+    insectLayer.appendChild(splat);
+    setTimeout(()=>splat.remove(),400);
+  }
+
+  function createStinkCloud(x,y){
+    for(let i=0;i<3;i++){
+      let cloud = document.createElement("div");
+      cloud.className = "stink-cloud";
+      cloud.style.left = (x-45+rand(-20,20))+"px";
+      cloud.style.top = (y-45+rand(-20,20))+"px";
+      insectLayer.appendChild(cloud);
+      setTimeout(()=>cloud.remove(),900);
+    }
+  }
+
+  function playSound(freq){
+    try{
+      const ctx = new(window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.frequency.value = freq;
+      o.type = "triangle";
+      g.gain.value = 0.12;
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.1);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime+0.1);
+    }catch(e){}
+  }
+
+  function createInsects(){
+    if(!currentQuestion) return;
+    let answers = [currentQuestion.correct, ...currentQuestion.wrong.slice(0,5)];
+    for(let i=answers.length-1;i>0;i--){
+      let j = Math.floor(Math.random()*(i+1));
+      [answers[i],answers[j]] = [answers[j],answers[i]];
+    }
+    
+    let availableEmojis = ["🪳","🦗","🐜","🕷️","🐛","🪲","🐞"];
+    
+    for(let i=0;i<answers.length;i++){
+      let emoji = availableEmojis[Math.floor(Math.random()*availableEmojis.length)];
+      let x = rand(60, width-120);
+      let y = rand(100, height-120);
+      let isCorrect = (answers[i] === currentQuestion.correct);
+      let vx = rand(-1.5,1.5);
+      let vy = rand(-1.5,1.5);
+      let angle = rand(0, Math.PI*2);
+      let turnSpeed = rand(0.02,0.08);
+      
+      let el = document.createElement("div");
+      el.className = "insect";
+      el.innerHTML = `<div class="emoji">${emoji}</div><div class="answer">${answers[i]}</div>`;
+      el.style.left = x+"px";
+      el.style.top = y+"px";
+      insectLayer.appendChild(el);
+      
+      insects.push({
+        el:el, x:x, y:y, vx:vx, vy:vy, angle:angle, turnSpeed:turnSpeed,
+        w:100, h:90, correct:isCorrect, answer:answers[i], emoji:emoji
+      });
+    }
+  }
+
+  function updateInsects(){
+    for(let i=0;i<insects.length;i++){
+      let r = insects[i];
+      r.angle += (Math.random() - 0.5) * r.turnSpeed;
+      r.vx += Math.cos(r.angle) * 0.05;
+      r.vy += Math.sin(r.angle) * 0.05;
+      let maxSpeed = 2.2;
+      if(Math.abs(r.vx) > maxSpeed) r.vx = r.vx>0 ? maxSpeed : -maxSpeed;
+      if(Math.abs(r.vy) > maxSpeed) r.vy = r.vy>0 ? maxSpeed : -maxSpeed;
+      
+      r.x += r.vx;
+      r.y += r.vy;
+      
+      if(r.x<20){r.x=20; r.vx=Math.abs(r.vx); r.angle = Math.atan2(r.vy, r.vx);}
+      if(r.x>width-120){r.x=width-120; r.vx=-Math.abs(r.vx); r.angle = Math.atan2(r.vy, r.vx);}
+      if(r.y<70){r.y=70; r.vy=Math.abs(r.vy); r.angle = Math.atan2(r.vy, r.vx);}
+      if(r.y>height-100){r.y=height-100; r.vy=-Math.abs(r.vy); r.angle = Math.atan2(r.vy, r.vx);}
+      
+      r.el.style.left = r.x+"px";
+      r.el.style.top = r.y+"px";
+      let wobble = Math.sin(Date.now()*0.015)*3;
+      r.el.style.transform = `rotate(${wobble}deg)`;
+    }
+  }
+
+  // ПАЛЕЦ
+  function checkHit(fingerX, fingerY){
+    if(processingHit || !gameStarted) return;
+    
+    for(let i=0;i<insects.length;i++){
+      let r = insects[i];
+      let cx = r.x + r.w/2;
+      let cy = r.y + r.h/2;
+      let dist = Math.hypot(fingerX - cx, fingerY - cy);
+      if(dist < 65){
+        processingHit = true;
+        createSplat(cx, cy, r.correct);
+        
+        if(r.correct){
+          let mult = 1+Math.floor(combo/5);
+          if(mult>5) mult=5;
+          let add = 10*mult;
+          score += add;
+          combo++;
+          playSound(880);
+          statusBar.innerHTML = `✅ ПРАВИЛЬНО! +${add} очков! Переход к следующему вопросу...`;
+          updateUI();
+          r.el.remove();
+          insects.splice(i,1);
+          if(comboTimeout) clearTimeout(comboTimeout);
+          comboTimeout = setTimeout(()=>{combo=0;updateUI();},2500);
+          // ВАЖНО: после правильного ответа переходим к следующему вопросу
+          setTimeout(()=>{
+            processingHit = false;
+            nextQuestion();
+          },800);
+        }else{
+          score = Math.max(0,score-5);
+          combo = 0;
+          playSound(140);
+          createStinkCloud(cx, cy);
+          statusBar.innerHTML = `❌ НЕПРАВИЛЬНО! "${r.answer}" -5 очков!`;
+          updateUI();
+          r.el.remove();
+          insects.splice(i,1);
+          setTimeout(()=>{
+            processingHit = false;
+            if(insects.length === 0){
+              nextQuestion();
+            }
+          },400);
+        }
+        break;
+      }
+    }
+  }
+
+  function onHandResults(results){
+    if(!gameStarted) return;
+    
+    if(results.multiHandLandmarks && results.multiHandLandmarks.length > 0){
+      const landmarks = results.multiHandLandmarks[0];
+      const indexTip = landmarks[8];
+      const x = (1 - indexTip.x) * width;
+      const y = indexTip.y * height;
+      
+      fingerPos = { x, y };
+      lastFingerSeenAt = performance.now();
+      statusBar.innerHTML = "👉 Палец найден! Ткни насекомое!";
+      checkHit(x, y);
+    }else{
+      if(performance.now() - lastFingerSeenAt > 200){
+        fingerPos = null;
+        statusBar.innerHTML = "👉 Покажите указательный палец в камеру";
+      }
+    }
+  }
+
+  function drawFingerCursor(){
+    overlayCtx.clearRect(0,0,width,height);
+    if(!fingerPos){
+      fingerLabel.style.display="none";
+      return;
+    }
+    
+    handGlowPulse += 0.08;
+    const pulse = 14 + Math.sin(handGlowPulse) * 3;
+    
+    const gradient = overlayCtx.createRadialGradient(fingerPos.x,fingerPos.y,2,fingerPos.x,fingerPos.y,30);
+    gradient.addColorStop(0,"rgba(255,255,255,0.95)");
+    gradient.addColorStop(0.22,"rgba(255,235,130,0.95)");
+    gradient.addColorStop(0.55,"rgba(255,170,60,0.28)");
+    gradient.addColorStop(1,"rgba(255,170,60,0)");
+    
+    overlayCtx.fillStyle = gradient;
+    overlayCtx.beginPath();
+    overlayCtx.arc(fingerPos.x,fingerPos.y,30,0,Math.PI*2);
+    overlayCtx.fill();
+    
+    overlayCtx.strokeStyle = "rgba(255,255,255,0.9)";
+    overlayCtx.lineWidth = 3;
+    overlayCtx.beginPath();
+    overlayCtx.arc(fingerPos.x,fingerPos.y,pulse,0,Math.PI*2);
+    overlayCtx.stroke();
+    
+    overlayCtx.fillStyle = "rgba(255,255,255,0.98)";
+    overlayCtx.beginPath();
+    overlayCtx.arc(fingerPos.x,fingerPos.y,7,0,Math.PI*2);
+    overlayCtx.fill();
+    
+    overlayCtx.fillStyle = "#ff8833";
+    overlayCtx.beginPath();
+    overlayCtx.arc(fingerPos.x,fingerPos.y,4,0,Math.PI*2);
+    overlayCtx.fill();
+    
+    fingerLabel.style.display = "block";
+    fingerLabel.style.left = fingerPos.x+"px";
+    fingerLabel.style.top = fingerPos.y+"px";
+  }
+
+  async function initHands(){
+    try{
+      hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.55
+      });
+      hands.onResults(onHandResults);
+      camera = new Camera(video, {
+        onFrame: async () => { await hands.send({ image: video }); },
+        width: 1280,
+        height: 720
+      });
+      await camera.start();
+      statusBar.innerHTML = "✅ Камера готова! Покажите указательный палец!";
+      return true;
+    }catch(err){
+      console.error(err);
+      statusBar.innerHTML = "❌ Ошибка камеры";
+      return false;
+    }
+  }
+
+  function gameLoop(){
+    if(gameStarted){
+      updateInsects();
+      drawFingerCursor();
+    }
+    animationFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  // ОТОБРАЖЕНИЕ ПАНЕЛИ РЕДАКТОРА
+  function renderTeacherPanel(){
+    questionsContainer.innerHTML = "";
+    currentQuestions.forEach((q, idx)=>{
+      const card = document.createElement("div");
+      card.className = "question-card" + (idx === currentQuestionIndex ? " active" : "");
+      
+      const isEditing = (editingQuestionIndex === idx);
+      
+      if(isEditing){
+        card.innerHTML = `
+          <div class="question-title">✏️ РЕДАКТИРОВАНИЕ ВОПРОСА ${idx+1}</div>
+          <div class="field">
+            <label>📝 Предложение (используйте ___ для пропуска):</label>
+            <textarea class="edit-sentence" id="edit_sentence_${idx}">${q.sentence}</textarea>
+          </div>
+          <div class="field">
+            <label>✅ Правильный ответ:</label>
+            <input class="edit-correct" id="edit_correct_${idx}" value="${q.correct}">
+          </div>
+          <div class="field">
+            <label>❌ Неправильные ответы:</label>
+            <div id="wrongs_container_${idx}">
+              ${q.wrong.map((w, wi) => `<div class="wrong-row"><input class="edit-wrong" data-wrong-index="${wi}" value="${w}"><button class="remove-wrong" data-wrong-index="${wi}">✖</button></div>`).join('')}
+            </div>
+            <button class="add-wrong-btn" data-idx="${idx}">➕ Добавить вариант</button>
+          </div>
+          <div class="question-actions">
+            <button class="small-btn save-question" data-idx="${idx}">💾 Сохранить вопрос</button>
+            <button class="small-btn cancel-edit">❌ Отмена</button>
+          </div>
+        `;
+        
+        const addWrongBtn = card.querySelector('.add-wrong-btn');
+        addWrongBtn.onclick = () => {
+          const container = document.getElementById(`wrongs_container_${idx}`);
+          const newIndex = container.children.length;
+          const newRow = document.createElement('div');
+          newRow.className = 'wrong-row';
+          newRow.innerHTML = `<input class="edit-wrong" data-wrong-index="${newIndex}" value=""><button class="remove-wrong" data-wrong-index="${newIndex}">✖</button>`;
+          container.appendChild(newRow);
+          newRow.querySelector('.remove-wrong').onclick = () => newRow.remove();
+        };
+        
+        card.querySelector('.save-question').onclick = () => {
+          const newSentence = document.getElementById(`edit_sentence_${idx}`).value;
+          const newCorrect = document.getElementById(`edit_correct_${idx}`).value;
+          const wrongInputs = card.querySelectorAll('.edit-wrong');
+          const newWrongs = Array.from(wrongInputs).map(inp => inp.value.trim()).filter(w => w !== "");
+          if(newSentence && newCorrect && newWrongs.length >= 1){
+            currentQuestions[idx] = { sentence: newSentence, correct: newCorrect, wrong: newWrongs };
+            editingQuestionIndex = null;
+            renderTeacherPanel();
+            saveQuestionsToLocal();
+            if(gameStarted){
+              if(idx === currentQuestionIndex){
+                currentQuestion = currentQuestions[currentQuestionIndex];
+                updateUI();
+                insects.forEach(i=>i.el.remove());
+                insects = [];
+                createInsects();
+              }
+            }
+            statusBar.innerHTML = `✅ Вопрос ${idx+1} сохранён!`;
+          } else {
+            alert("Заполните предложение, правильный ответ и хотя бы один неправильный!");
+          }
+        };
+        
+        card.querySelector('.cancel-edit').onclick = () => {
+          editingQuestionIndex = null;
+          renderTeacherPanel();
+        };
+      } else {
+        card.innerHTML = `
+          <div class="question-title">📌 Вопрос ${idx+1}: ${q.sentence.substring(0,60)}${q.sentence.length>60 ? '...' : ''}</div>
+          <div class="question-actions">
+            <button class="small-btn edit-question" data-idx="${idx}">✏️ Редактировать</button>
+            <button class="small-btn use-question" data-idx="${idx}">🔍 Использовать</button>
+            <button class="small-btn delete-question" data-idx="${idx}">🗑️ Удалить вопрос</button>
+          </div>
+          <div style="font-size:10px; color:#888;">✅ ${q.correct} | ❌ ${q.wrong.slice(0,3).join(', ')}${q.wrong.length>3 ? '...' : ''}</div>
+        `;
+        
+        card.querySelector('.edit-question').onclick = () => {
+          editingQuestionIndex = idx;
+          renderTeacherPanel();
+        };
+        
+        card.querySelector('.use-question').onclick = () => {
+          currentQuestionIndex = idx;
+          currentQuestion = currentQuestions[idx];
+          if(gameStarted){
+            insects.forEach(i=>i.el.remove());
+            insects = [];
+            createInsects();
+            updateUI();
+          }
+          updateUI();
+          renderTeacherPanel();
+          statusBar.innerHTML = `🔍 Выбран вопрос ${idx+1}`;
+        };
+        
+        card.querySelector('.delete-question').onclick = () => {
+          if(currentQuestions.length <= 1){
+            alert("Нельзя удалить последний вопрос!");
+            return;
+          }
+          currentQuestions.splice(idx,1);
+          if(currentQuestionIndex >= currentQuestions.length) currentQuestionIndex = currentQuestions.length - 1;
+          currentQuestion = currentQuestions[currentQuestionIndex];
+          if(gameStarted){
+            insects.forEach(i=>i.el.remove());
+            insects = [];
+            createInsects();
+          }
+          updateUI();
+          renderTeacherPanel();
+          saveQuestionsToLocal();
+          statusBar.innerHTML = `🗑️ Вопрос удалён`;
+        };
+      }
+      questionsContainer.appendChild(card);
+    });
+  }
+
+  function addNewQuestion(){
+    currentQuestions.push({
+      sentence: "Новый вопрос с _____",
+      correct: "ответ",
+      wrong: ["неправильный1", "неправильный2", "неправильный3"]
+    });
+    renderTeacherPanel();
+    saveQuestionsToLocal();
+    statusBar.innerHTML = "➕ Добавлен новый вопрос. Сохранено!";
+  }
+
+  function resetToDefaultQuestions(){
+    if(confirm("Сбросить все вопросы к стандартным? (Ваши изменения будут потеряны)")){
+      currentQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+      currentQuestionIndex = 0;
+      currentQuestion = currentQuestions[0];
+      renderTeacherPanel();
+      saveQuestionsToLocal();
+      if(gameStarted){
+        insects.forEach(i=>i.el.remove());
+        insects = [];
+        createInsects();
+        updateUI();
+      }
+      updateUI();
+      statusBar.innerHTML = "🔄 Вопросы сброшены к стандартным!";
+    }
+  }
+
+  function resetGame(){
+    score = 0; combo = 0;
+    currentQuestionIndex = 0;
+    currentQuestion = currentQuestions[0];
+    updateUI();
+    insects.forEach(i=>i.el.remove());
+    insects = [];
+    if(gameStarted) createInsects();
+    statusBar.innerHTML = "🔄 Счёт сброшен!";
+  }
+
+  async function startGame(){
+    if(currentQuestions.length<1){alert("Добавьте хотя бы 1 вопрос!");return;}
+    startOverlay.classList.add("hidden");
+    gameStarted = true;
+    score = 0; combo = 0;
+    currentQuestionIndex = 0;
+    currentQuestion = currentQuestions[0];
+    updateUI();
+    insects.forEach(i=>i.el.remove());
+    insects = [];
+    createInsects();
+    if(!hands) await initHands();
+    statusBar.innerHTML = "🪳 Игра началась! Тыкай в правильных насекомых!";
+  }
+
+  let panelCollapsed = false;
+  toggleTeacherBtn.onclick = ()=>{
+    panelCollapsed = !panelCollapsed;
+    teacherPanel.classList.toggle("collapsed", panelCollapsed);
+    toggleTeacherBtn.textContent = panelCollapsed ? "◀" : "▶";
+  };
+  
+  addQuestionBtn.onclick = addNewQuestion;
+  resetScoreBtn.onclick = resetGame;
+  resetQuestionsBtn.onclick = resetToDefaultQuestions;
+  startBtn.onclick = startGame;
+  restartBtn.onclick = ()=>{gameOverScreen.style.display="none"; resetGame(); startGame();};
+  window.addEventListener("resize",resizeAll);
+  
+  resizeAll();
+  createInsectSelector();
+  renderTeacherPanel();
+  gameLoop();
+</script>
+</body>
+</html>
