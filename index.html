@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🐞 НАСЕКОМЫЕ - Ткни пальцем в правильный ответ!</title>
+<title>🐞 НАСЕКОМЫЕ - Неправильные глаголы (2-я форма)</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;user-select:none;}
   body{overflow:hidden;font-family:'Segoe UI','Comic Sans MS',system-ui,sans-serif;}
@@ -168,28 +168,28 @@
   <div id="fingerLabel">👉 ТКНИ ПАЛЬЦЕМ!</div>
   
   <div id="teacherPanel">
-    <div id="teacherHeader"><h3>📝 Teacher Panel</h3><button class="toggle-btn" id="toggleTeacherBtn">▶</button></div>
+    <div id="teacherHeader"><h3>📝 Teacher Panel - IRREGULAR VERBS (2nd form)</h3><button class="toggle-btn" id="toggleTeacherBtn">▶</button></div>
     <div id="teacherBody">
-      <div class="teacher-note">✏️ Нажмите на вопрос для редактирования. Все изменения СОХРАНЯЮТСЯ АВТОМАТИЧЕСКИ!</div>
+      <div class="teacher-note">✏️ Найди ВТОРУЮ ФОРМУ (Past Simple) неправильного глагола!</div>
       
       <div class="teacher-note" style="margin-top:5px;">🦗 ВЫБЕРИ НАСЕКОМОЕ:</div>
       <div class="insect-selector" id="insectSelector"></div>
       
       <div class="teacher-actions">
-        <button class="btn btn-success" id="addQuestionBtn">➕ Добавить вопрос</button>
+        <button class="btn btn-success" id="addQuestionBtn">➕ Добавить глагол</button>
         <button class="btn btn-secondary" id="resetScoreBtn">🔄 Сброс счёта</button>
-        <button class="btn btn-warning" id="resetQuestionsBtn">🔄 Сбросить вопросы по умолчанию</button>
+        <button class="btn btn-warning" id="resetQuestionsBtn">🔄 Сбросить глаголы по умолчанию</button>
       </div>
       <div id="questionsContainer" class="question-list"></div>
-      <div class="teacher-note" style="margin-top:10px; font-size:10px; color:#4caf50;">✅ Все изменения сохраняются автоматически! Нажмите ✏️ Редактировать, чтобы удалить отдельные варианты ответов (красный крестик).</div>
+      <div class="teacher-note" style="margin-top:10px; font-size:10px; color:#4caf50;">📌 Вопрос: "глагол (1-я форма)" → правильный ответ: 2-я форма (Past Simple)</div>
     </div>
   </div>
   
   <div id="startOverlay">
     <div class="emoji-big">🪳🦗🐜🕷️🐛🪲🐞</div>
-    <h1>НАСЕКОМЫЕ - БЕГА</h1>
-    <p>Ткни пальцем в насекомое с ПРАВИЛЬНЫМ ответом!</p>
-    <p>✅ Правильно = +10 очков + комбо → следующий вопрос</p>
+    <h1>НЕПРАВИЛЬНЫЕ ГЛАГОЛЫ</h1>
+    <p>📖 Найди ВТОРУЮ ФОРМУ (Past Simple)!</p>
+    <p>✅ Правильно = +10 очков + комбо → следующий глагол</p>
     <p>❌ Неправильно = вонючий смрад -5 очков</p>
     <p>👉 ПОКАЖИТЕ УКАЗАТЕЛЬНЫЙ ПАЛЕЦ</p>
     <div class="emoji-big">👇👉👇</div>
@@ -208,7 +208,7 @@
 
 <script>
   // ========== КЛЮЧ ДЛЯ LOCALSTORAGE ==========
-  const STORAGE_KEY = "insect_game_questions";
+  const STORAGE_KEY = "insect_game_questions_irregular";
   
   // ========== ВИДЫ НАСЕКОМЫХ ==========
   const insectNames = {
@@ -221,11 +221,22 @@
     7: { emoji: "🐞", name: "БОЖЬЯ КОРОВКА" }
   };
   
-  // ========== ВОПРОСЫ ПО УМОЛЧАНИЮ ==========
+  // ========== ВОПРОСЫ ПО УМОЛЧАНИЮ (неправильные глаголы, 2-я форма) ==========
   const DEFAULT_QUESTIONS = [
-    { sentence: "_____ — столица Франции", correct: "Париж", wrong: ["Лондон","Берлин","Мадрид","Рим","Прага","Вена"] },
-    { sentence: "2 × 2 = _____", correct: "4", wrong: ["3","5","6","7","8","9"] },
-    { sentence: "_____ is the capital of England", correct: "London", wrong: ["Paris","Berlin","Madrid","Rome","Lisbon","Dublin"] }
+    { sentence: "teach → _____", correct: "taught", wrong: ["teached","taugt","teacht","taughted","teach","taugth"] },
+    { sentence: "catch → _____", correct: "caught", wrong: ["catched","caugt","catcht","cought","caut","cot"] },
+    { sentence: "buy → _____", correct: "bought", wrong: ["buyed","brought","buyd","boughted","boight","baught"] },
+    { sentence: "bring → _____", correct: "brought", wrong: ["bringed","brang","brung","brougt","bringt","broght"] },
+    { sentence: "think → _____", correct: "thought", wrong: ["thinked","thunk","thaugt","thougt","thinkt","thinked"] },
+    { sentence: "sell → _____", correct: "sold", wrong: ["selled","seld","sold","soold","selt","solled"] },
+    { sentence: "tell → _____", correct: "told", wrong: ["telled","teld","tolled","tolt","teled","told"] },
+    { sentence: "meet → _____", correct: "met", wrong: ["meeted","meet","metted","mite","mate","meetd"] },
+    { sentence: "lose → _____", correct: "lost", wrong: ["losed","loosed","lossed","losten","loseed","losst"] },
+    { sentence: "fight → _____", correct: "fought", wrong: ["fighted","foughted","faught","faut","foght","fought"] },
+    { sentence: "get → _____", correct: "got", wrong: ["getted","gotted","gaten","goted","get","goted"] },
+    { sentence: "build → _____", correct: "built", wrong: ["builded","buided","buid","bilt","buildt","bulit"] },
+    { sentence: "find → _____", correct: "found", wrong: ["finded","founded","fined","faund","fond","findd"] },
+    { sentence: "leave → _____", correct: "left", wrong: ["leaved","leaved","leaft","lefed","leaft","levt"] }
   ];
 
   // ========== ЗАГРУЗКА/СОХРАНЕНИЕ ВОПРОСОВ ==========
@@ -329,8 +340,7 @@
     if(mult>5) mult=5;
     comboMult.textContent = `x${mult}`;
     if(currentQuestion) {
-      let qtext = currentQuestion.sentence.replace("_____","______");
-      questionBox.innerHTML = `📖 ${qtext}`;
+      questionBox.innerHTML = `📖 ${currentQuestion.sentence}`;
     }
   }
 
@@ -352,7 +362,7 @@
     insects.forEach(i=>i.el.remove());
     insects = [];
     createInsects();
-    statusBar.innerHTML = `🔄 Вопрос ${currentQuestionIndex+1}/${currentQuestions.length}`;
+    statusBar.innerHTML = `🔄 Глагол ${currentQuestionIndex+1}/${currentQuestions.length}`;
   }
 
   function createSplat(x,y,isCorrect){
@@ -470,13 +480,12 @@
           score += add;
           combo++;
           playSound(880);
-          statusBar.innerHTML = `✅ ПРАВИЛЬНО! +${add} очков! Переход к следующему вопросу...`;
+          statusBar.innerHTML = `✅ ПРАВИЛЬНО! "${r.answer}" - это 2-я форма! +${add} очков!`;
           updateUI();
           r.el.remove();
           insects.splice(i,1);
           if(comboTimeout) clearTimeout(comboTimeout);
           comboTimeout = setTimeout(()=>{combo=0;updateUI();},2500);
-          // ВАЖНО: после правильного ответа переходим к следующему вопросу
           setTimeout(()=>{
             processingHit = false;
             nextQuestion();
@@ -486,7 +495,7 @@
           combo = 0;
           playSound(140);
           createStinkCloud(cx, cy);
-          statusBar.innerHTML = `❌ НЕПРАВИЛЬНО! "${r.answer}" -5 очков!`;
+          statusBar.innerHTML = `❌ НЕПРАВИЛЬНО! "${r.answer}" - это НЕ 2-я форма глагола "${currentQuestion.sentence.replace(' → _____','')}" -5 очков!`;
           updateUI();
           r.el.remove();
           insects.splice(i,1);
@@ -513,7 +522,7 @@
       
       fingerPos = { x, y };
       lastFingerSeenAt = performance.now();
-      statusBar.innerHTML = "👉 Палец найден! Ткни насекомое!";
+      statusBar.innerHTML = "👉 Палец найден! Ткни в правильную форму глагола!";
       checkHit(x, y);
     }else{
       if(performance.now() - lastFingerSeenAt > 200){
@@ -611,13 +620,13 @@
       
       if(isEditing){
         card.innerHTML = `
-          <div class="question-title">✏️ РЕДАКТИРОВАНИЕ ВОПРОСА ${idx+1}</div>
+          <div class="question-title">✏️ РЕДАКТИРОВАНИЕ ГЛАГОЛА ${idx+1}</div>
           <div class="field">
-            <label>📝 Предложение (используйте ___ для пропуска):</label>
+            <label>📝 Глагол в 1-й форме (например: teach → _____):</label>
             <textarea class="edit-sentence" id="edit_sentence_${idx}">${q.sentence}</textarea>
           </div>
           <div class="field">
-            <label>✅ Правильный ответ:</label>
+            <label>✅ Вторая форма (правильный ответ):</label>
             <input class="edit-correct" id="edit_correct_${idx}" value="${q.correct}">
           </div>
           <div class="field">
@@ -628,7 +637,7 @@
             <button class="add-wrong-btn" data-idx="${idx}">➕ Добавить вариант</button>
           </div>
           <div class="question-actions">
-            <button class="small-btn save-question" data-idx="${idx}">💾 Сохранить вопрос</button>
+            <button class="small-btn save-question" data-idx="${idx}">💾 Сохранить</button>
             <button class="small-btn cancel-edit">❌ Отмена</button>
           </div>
         `;
@@ -663,9 +672,9 @@
                 createInsects();
               }
             }
-            statusBar.innerHTML = `✅ Вопрос ${idx+1} сохранён!`;
+            statusBar.innerHTML = `✅ Глагол ${idx+1} сохранён!`;
           } else {
-            alert("Заполните предложение, правильный ответ и хотя бы один неправильный!");
+            alert("Заполните предложение, правильный ответ и хотя бы один неправильный вариант!");
           }
         };
         
@@ -675,11 +684,11 @@
         };
       } else {
         card.innerHTML = `
-          <div class="question-title">📌 Вопрос ${idx+1}: ${q.sentence.substring(0,60)}${q.sentence.length>60 ? '...' : ''}</div>
+          <div class="question-title">📌 ${q.sentence}</div>
           <div class="question-actions">
             <button class="small-btn edit-question" data-idx="${idx}">✏️ Редактировать</button>
             <button class="small-btn use-question" data-idx="${idx}">🔍 Использовать</button>
-            <button class="small-btn delete-question" data-idx="${idx}">🗑️ Удалить вопрос</button>
+            <button class="small-btn delete-question" data-idx="${idx}">🗑️ Удалить глагол</button>
           </div>
           <div style="font-size:10px; color:#888;">✅ ${q.correct} | ❌ ${q.wrong.slice(0,3).join(', ')}${q.wrong.length>3 ? '...' : ''}</div>
         `;
@@ -700,12 +709,12 @@
           }
           updateUI();
           renderTeacherPanel();
-          statusBar.innerHTML = `🔍 Выбран вопрос ${idx+1}`;
+          statusBar.innerHTML = `🔍 Выбран глагол ${idx+1}`;
         };
         
         card.querySelector('.delete-question').onclick = () => {
           if(currentQuestions.length <= 1){
-            alert("Нельзя удалить последний вопрос!");
+            alert("Нельзя удалить последний глагол!");
             return;
           }
           currentQuestions.splice(idx,1);
@@ -719,7 +728,7 @@
           updateUI();
           renderTeacherPanel();
           saveQuestionsToLocal();
-          statusBar.innerHTML = `🗑️ Вопрос удалён`;
+          statusBar.innerHTML = `🗑️ Глагол удалён`;
         };
       }
       questionsContainer.appendChild(card);
@@ -728,17 +737,17 @@
 
   function addNewQuestion(){
     currentQuestions.push({
-      sentence: "Новый вопрос с _____",
-      correct: "ответ",
-      wrong: ["неправильный1", "неправильный2", "неправильный3"]
+      sentence: "new verb → _____",
+      correct: "past_form",
+      wrong: ["wrong1", "wrong2", "wrong3"]
     });
     renderTeacherPanel();
     saveQuestionsToLocal();
-    statusBar.innerHTML = "➕ Добавлен новый вопрос. Сохранено!";
+    statusBar.innerHTML = "➕ Добавлен новый глагол. Сохранено!";
   }
 
   function resetToDefaultQuestions(){
-    if(confirm("Сбросить все вопросы к стандартным? (Ваши изменения будут потеряны)")){
+    if(confirm("Сбросить все глаголы к стандартным? (Ваши изменения будут потеряны)")){
       currentQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
       currentQuestionIndex = 0;
       currentQuestion = currentQuestions[0];
@@ -751,7 +760,7 @@
         updateUI();
       }
       updateUI();
-      statusBar.innerHTML = "🔄 Вопросы сброшены к стандартным!";
+      statusBar.innerHTML = "🔄 Глаголы сброшены к стандартным (14 неправильных глаголов)!";
     }
   }
 
@@ -767,7 +776,7 @@
   }
 
   async function startGame(){
-    if(currentQuestions.length<1){alert("Добавьте хотя бы 1 вопрос!");return;}
+    if(currentQuestions.length<1){alert("Добавьте хотя бы 1 глагол!");return;}
     startOverlay.classList.add("hidden");
     gameStarted = true;
     score = 0; combo = 0;
@@ -778,7 +787,7 @@
     insects = [];
     createInsects();
     if(!hands) await initHands();
-    statusBar.innerHTML = "🪳 Игра началась! Тыкай в правильных насекомых!";
+    statusBar.innerHTML = "🪳 Игра началась! Найди правильную 2-ю форму неправильного глагола!";
   }
 
   let panelCollapsed = false;
